@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تفاصيل المورد</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            direction: rtl;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        .container {
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #444;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: center;
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+        input[type="text"], input[type="number"] {
+            width: calc(100% - 20px);
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            padding: 8px 16px;
+            margin: 5px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .payments-table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .payments-table th, .payments-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: center;
+        }
+        .payments-table th {
+            background-color: #007bff;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>تفاصيل المورد</h1>
+    <table>
+        <tr>
+            <th>اسم المورد</th>
+            <td><input type="text" id="supplierName" value=""></td>
+        </tr>
+        <tr>
+            <th>العنوان</th>
+            <td><input type="text" id="supplierAddress" value=""></td>
+        </tr>
+        <tr>
+            <th>رقم الهاتف</th>
+            <td><input type="text" id="supplierPhone" value=""></td>
+        </tr>
+        <tr>
+            <th>المبلغ الإجمالي</th>
+            <td><input type="number" id="totalAmount" value=""></td>
+        </tr>
+        <tr>
+            <th>المبلغ المدفوع</th>
+            <td><input type="number" id="paidAmount" value="" readonly></td>
+        </tr>
+        <tr>
+            <th>الباقي</th>
+            <td><input type="number" id="remainingAmount" value="" readonly></td>
+        </tr>
+    </table>
+
+    <button onclick="updateSupplier()">حفظ التعديلات</button>
+    <button onclick="addPayment()">دفعة جديدة</button>
+    <button onclick="window.location.href = 'index.html'">العودة للقائمة</button>
+
+    <h2>سجل الدفعات</h2>
+    <table class="payments-table">
+        <thead>
+            <tr>
+                <th>التاريخ</th>
+                <th>المبلغ</th>
+            </tr>
+        </thead>
+        <tbody id="paymentsTableBody">
+            <!-- الدفعات ستضاف هنا -->
+        </tbody>
+    </table>
+</div>
+
+<script>
+    let suppliers = [];
+    let selectedSupplierIndex = null;
+
+    // تحميل البيانات من LocalStorage
+    function loadSuppliers() {
+        const savedSuppliers = localStorage.getItem('suppliers');
+        if (savedSuppliers) {
+            suppliers = JSON.parse(savedSuppliers);
+        }
+        selectedSupplierIndex = localStorage.getItem('selectedSupplierIndex');
+        renderSupplierDetails();
+    }
+
+    // عرض تفاصيل المورد
+    function renderSupplierDetails() {
+        if (selectedSupplierIndex !== null) {
+            const supplier = suppliers[selectedSupplierIndex];
+            const remainingAmount = supplier.totalAmount - supplier.paidAmount;
+
+            document.getElementById('supplierName').value = supplier.name;
+            document.getElementById('supplierAddress').value = supplier.address;
+            document.getElementById('supplierPhone').value = supplier.phone;
+            document.getElementById('totalAmount').value = supplier.totalAmount.toFixed(2);
+            document.getElementById('paidAmount').value = supplier.paidAmount.toFixed(2);
+            document.getElementById('remainingAmount').value = remainingAmount.toFixed(2);
+
+            renderPaymentsTable(supplier.payments);
+        }
+    }
+
+    // عرض سجل الدفعات
+    function renderPaymentsTable(payments) {
+        const tbody = document.getElementById('paymentsTableBody');
+        tbody.innerHTML = '';
+        payments.forEach(payment => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${payment.date}</td>
+                <td>${payment.amount.toFixed(2)}</td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+
+    // تحديث بيانات المورد
+    function updateSupplier() {
+        if (selectedSupplierIndex !== null) {
+            const supplier = suppliers[selectedSupplierIndex];
+            supplier.name = document.getElementById('supplierName').value;
+            supplier.address = document.getElementById('supplierAddress').value;
+            supplier.phone = document.getElementById('supplierPhone').value;
+            supplier.totalAmount = parseFloat(document.getElementById('totalAmount').value);
+
+            localStorage.setItem('suppliers', JSON.stringify(suppliers));
+            alert("تم تحديث بيانات المورد بنجاح!");
+        }
+    }
+
+    // إضافة دفعة جديدة
+    function addPayment() {
+        const amount = parseFloat(prompt("ادخل مبلغ الدفعة:"));
+        if (!isNaN(amount)) {
+            const payment = {
+                date: new Date().toLocaleDateString(),
+                amount: amount
+            };
+            suppliers[selectedSupplierIndex].payments.push(payment);
+            suppliers[selectedSupplierIndex].paidAmount += amount;
+            localStorage.setItem('suppliers', JSON.stringify(suppliers));
+            renderSupplierDetails();
+        } else {
+            alert("يرجى إدخال مبلغ صحيح!");
+        }
+    }
+
+    // تحميل البيانات عند فتح الصفحة
+    loadSuppliers();
+</script>
+
+</body>
+</html>

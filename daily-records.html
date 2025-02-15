@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>السجلات اليومية</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            padding: 20px;
+            text-align: right;
+        }
+        h1 {
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #333;
+            color: #fff;
+        }
+        .actions {
+            margin-top: 20px;
+        }
+        .actions a {
+            display: inline-block;
+            margin-right: 10px;
+            padding: 10px 20px;
+            text-decoration: none;
+            color: #fff;
+            background-color: #007bff;
+            border-radius: 4px;
+        }
+        .actions a:hover {
+            background-color: #0056b3;
+        }
+        .date-buttons {
+            margin-bottom: 20px;
+        }
+        .date-buttons button {
+            margin-right: 10px;
+            margin-bottom: 10px;
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .date-buttons button:hover {
+            background-color: #218838;
+        }
+        .search-container {
+            margin-bottom: 20px;
+        }
+        .search-container input {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 200px;
+        }
+        .search-container button {
+            padding: 10px 20px;
+            background-color: #ffc107;
+            color: #000;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>السجلات اليومية</h1>
+
+    <!-- حقل البحث النصي بالتاريخ -->
+    <div class="search-container">
+        <input type="text" id="search-date" placeholder="أدخل التاريخ (YYYY-MM-DD)">
+        <button onclick="searchByDate()">بحث بالتاريخ</button>
+    </div>
+
+    <!-- أزرار التواريخ -->
+    <div class="date-buttons" id="date-buttons">
+        <!-- سيتم ملء هذا القسم بأزرار التواريخ باستخدام JavaScript -->
+    </div>
+
+    <!-- جدول الفواتير -->
+    <table>
+        <thead>
+            <tr>
+                <th>اسم العميل</th>
+                <th>التاريخ</th>
+                <th>الإجمالي</th>
+                <th>تفاصيل الفاتورة</th>
+            </tr>
+        </thead>
+        <tbody id="invoice-table-body">
+            <!-- سيتم ملء هذا القسم بالفواتير باستخدام JavaScript -->
+        </tbody>
+    </table>
+
+    <div class="actions">
+        <a href="products.html">انتقل إلى صفحة المنتجات</a>
+        <a href="sales.html">انتقل إلى صفحة البيع</a>
+    </div>
+
+    <script>
+        const invoices = JSON.parse(localStorage.getItem('invoices')) || [];
+        const dateButtonsContainer = document.getElementById('date-buttons');
+        const invoiceTableBody = document.getElementById('invoice-table-body');
+
+        // إنشاء أزرار التواريخ
+        function createDateButtons() {
+            const uniqueDates = [...new Set(invoices.map(invoice => invoice.date))];
+            dateButtonsContainer.innerHTML = '';
+
+            uniqueDates.forEach(date => {
+                const button = document.createElement('button');
+                button.textContent = date;
+                button.addEventListener('click', () => filterByDate(date));
+                dateButtonsContainer.appendChild(button);
+            });
+        }
+
+        // تصفية الفواتير حسب التاريخ
+        function filterByDate(date) {
+            const filteredInvoices = invoices.filter(invoice => invoice.date === date);
+            displayInvoices(filteredInvoices);
+        }
+
+        // البحث عن الفواتير بالتاريخ (بحث نصي)
+        function searchByDate() {
+            const searchDate = document.getElementById('search-date').value.trim();
+            if (!searchDate) {
+                alert('يرجى إدخال تاريخ للبحث!');
+                return;
+            }
+
+            const filteredInvoices = invoices.filter(invoice => invoice.date.includes(searchDate));
+            if (filteredInvoices.length === 0) {
+                alert('لا توجد فواتير تطابق هذا التاريخ!');
+            } else {
+                displayInvoices(filteredInvoices);
+            }
+        }
+
+        // عرض الفواتير
+        function displayInvoices(filteredInvoices = invoices) {
+            invoiceTableBody.innerHTML = '';
+            filteredInvoices.forEach(invoice => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${invoice.customerName}</td>
+                    <td>${invoice.date}</td>
+                    <td>${invoice.total.toFixed(2)}</td>
+                    <td><button onclick="showInvoiceDetails('${invoice.customerName}', '${invoice.date}')">عرض التفاصيل</button></td>
+                `;
+                invoiceTableBody.appendChild(row);
+            });
+        }
+
+        // عرض تفاصيل الفاتورة
+        function showInvoiceDetails(customerName, date) {
+            const invoice = invoices.find(inv => inv.customerName === customerName && inv.date === date);
+            if (invoice) {
+                let details = `اسم العميل: ${invoice.customerName}\nالتاريخ: ${invoice.date}\n\n`;
+                invoice.items.forEach(item => {
+                    details += `${item.productName} - ${item.quantity} x ${item.price.toFixed(2)} = ${item.total.toFixed(2)}\n`;
+                });
+                details += `\nالإجمالي الكلي: ${invoice.total.toFixed(2)}`;
+                alert(details);
+            }
+        }
+
+        // تهيئة الصفحة
+        createDateButtons();
+        displayInvoices();
+    </script>
+</body>
+</html>

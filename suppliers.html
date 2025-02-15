@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة الموردين</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            direction: rtl;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #444;
+        }
+        .search-container {
+            width: 80%;
+            margin: 20px auto;
+            text-align: center;
+        }
+        .search-container input {
+            width: 60%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .filter-btn {
+            display: block;
+            width: 200px;
+            margin: 10px auto;
+            padding: 10px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .filter-btn:hover {
+            background-color: #218838;
+        }
+        table {
+            width: 80%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: center;
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+        button {
+            padding: 8px 16px;
+            margin: 5px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .delete-btn {
+            background-color: #dc3545;
+        }
+        .delete-btn:hover {
+            background-color: #c82333;
+        }
+        .fixed-bottom {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: #f9f9f9;
+            padding: 10px;
+            box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        .form-container {
+            display: none;
+            margin-top: 10px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .form-container label {
+            display: block;
+            margin: 10px 0 5px;
+            color: #555;
+        }
+        .form-container input {
+            width: calc(100% - 20px);
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>إدارة الموردين</h1>
+
+<button class="filter-btn" onclick="showSuppliersWithDebt()">عرض العملاء الذين عليهم أموال</button>
+
+<div class="search-container">
+    <input type="text" id="searchInput" placeholder="ابحث باسم المورد..." oninput="filterSuppliers()">
+</div>
+
+<h2>قائمة الموردين</h2>
+<table id="suppliersTable">
+    <thead>
+        <tr>
+            <th>اسم المورد</th>
+            <th>الباقي</th>
+            <th>تفاصيل الحساب</th>
+            <th>حذف المورد</th>
+        </tr>
+    </thead>
+    <tbody>
+        <!-- البيانات ستضاف هنا -->
+    </tbody>
+</table>
+
+<div class="fixed-bottom">
+    <button onclick="toggleForm()">إضافة مورد جديد</button>
+    <div class="form-container" id="formContainer">
+        <label for="supplierName">اسم المورد:</label>
+        <input type="text" id="supplierName" placeholder="ادخل اسم المورد">
+
+        <label for="supplierAddress">عنوان المورد:</label>
+        <input type="text" id="supplierAddress" placeholder="ادخل عنوان المورد">
+
+        <label for="supplierPhone">رقم الهاتف:</label>
+        <input type="text" id="supplierPhone" placeholder="ادخل رقم الهاتف">
+
+        <label for="totalAmount">المبلغ الإجمالي:</label>
+        <input type="number" id="totalAmount" placeholder="ادخل المبلغ الإجمالي">
+
+        <label for="paidAmount">المبلغ المدفوع:</label>
+        <input type="number" id="paidAmount" placeholder="ادخل المبلغ المدفوع">
+
+        <button onclick="saveSupplier()">حفظ</button>
+        <button onclick="clearForm()">مسح</button>
+    </div>
+</div>
+
+<script>
+    let suppliers = [];
+
+    // تحميل البيانات من LocalStorage عند فتح الصفحة
+    function loadSuppliers() {
+        const savedSuppliers = localStorage.getItem('suppliers');
+        if (savedSuppliers) {
+            suppliers = JSON.parse(savedSuppliers);
+            renderSuppliersTable();
+        }
+    }
+
+    // حفظ البيانات في LocalStorage
+    function saveSuppliers() {
+        localStorage.setItem('suppliers', JSON.stringify(suppliers));
+    }
+
+    function toggleForm() {
+        const formContainer = document.getElementById('formContainer');
+        formContainer.style.display = formContainer.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function saveSupplier() {
+        const supplierName = document.getElementById('supplierName').value;
+        const supplierAddress = document.getElementById('supplierAddress').value;
+        const supplierPhone = document.getElementById('supplierPhone').value;
+        const totalAmount = parseFloat(document.getElementById('totalAmount').value);
+        const paidAmount = parseFloat(document.getElementById('paidAmount').value);
+
+        if (supplierName && supplierAddress && supplierPhone && !isNaN(totalAmount) && !isNaN(paidAmount)) {
+            suppliers.push({
+                name: supplierName,
+                address: supplierAddress,
+                phone: supplierPhone,
+                totalAmount: totalAmount,
+                paidAmount: paidAmount,
+                payments: []
+            });
+            clearForm();
+            renderSuppliersTable();
+            saveSuppliers(); // حفظ البيانات في LocalStorage
+            toggleForm(); // إخفاء النموذج بعد الحفظ
+        } else {
+            alert("يرجى ملء جميع الحقول بشكل صحيح!");
+        }
+    }
+
+    function clearForm() {
+        document.getElementById('supplierName').value = '';
+        document.getElementById('supplierAddress').value = '';
+        document.getElementById('supplierPhone').value = '';
+        document.getElementById('totalAmount').value = '';
+        document.getElementById('paidAmount').value = '';
+    }
+
+    function viewSupplierDetails(index) {
+        // حفظ الفهرس في LocalStorage للوصول إليه في الصفحة الأخرى
+        localStorage.setItem('selectedSupplierIndex', index);
+        // الانتقال إلى صفحة تفاصيل المورد
+        window.location.href = 'supplier_details.html';
+    }
+
+    // حذف المورد
+    function deleteSupplier(index) {
+        if (confirm("هل أنت متأكد من حذف هذا المورد؟")) {
+            suppliers.splice(index, 1);
+            saveSuppliers(); // حفظ التغييرات في LocalStorage
+            renderSuppliersTable(); // إعادة عرض الجدول
+        }
+    }
+
+    // تصفية الموردين حسب الاسم
+    function filterSuppliers() {
+        const searchText = document.getElementById('searchInput').value.toLowerCase();
+        const filteredSuppliers = suppliers.filter(supplier => 
+            supplier.name.toLowerCase().includes(searchText)
+        );
+        renderSuppliersTable(filteredSuppliers);
+    }
+
+    // عرض العملاء الذين عليهم أموال
+    function showSuppliersWithDebt() {
+        const suppliersWithDebt = suppliers.filter(supplier => 
+            (supplier.totalAmount - supplier.paidAmount) > 0
+        );
+        renderSuppliersTable(suppliersWithDebt);
+    }
+
+    // عرض الجدول
+    function renderSuppliersTable(filteredSuppliers = suppliers) {
+        const tbody = document.querySelector('#suppliersTable tbody');
+        tbody.innerHTML = '';
+        filteredSuppliers.forEach((supplier, index) => {
+            const remainingAmount = supplier.totalAmount - supplier.paidAmount;
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${supplier.name}</td>
+                <td>${remainingAmount.toFixed(2)}</td>
+                <td><button onclick="viewSupplierDetails(${index})">عرض التفاصيل</button></td>
+                <td>
+                    ${remainingAmount === 0 ? `<button class="delete-btn" onclick="deleteSupplier(${index})">حذف المورد</button>` : ''}
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+
+    // تحميل البيانات عند فتح الصفحة
+    loadSuppliers();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>صفحة البيع</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            padding: 20px;
+            text-align: right;
+        }
+        h1 {
+            color: #333;
+        }
+        form label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        form input, form button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        form button {
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+        form button:hover {
+            background-color: #218838;
+        }
+        .suggestions {
+            position: relative;
+        }
+        .suggestions-list {
+            position: absolute;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 100%;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 10;
+        }
+        .suggestions-list div {
+            padding: 10px;
+            cursor: pointer;
+        }
+        .suggestions-list div:hover {
+            background-color: #f1f1f1;
+        }
+        .invoice-preview {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .invoice-preview h2 {
+            margin-top: 0;
+        }
+        .invoice-preview table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+        .invoice-preview table, .invoice-preview th, .invoice-preview td {
+            border: 1px solid #ddd;
+        }
+        .invoice-preview th, .invoice-preview td {
+            padding: 10px;
+            text-align: center;
+        }
+        .invoice-preview th {
+            background-color: #333;
+            color: #fff;
+        }
+        .invoice-actions button {
+            margin-right: 10px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .invoice-actions button.save {
+            background-color: #28a745;
+            color: #fff;
+        }
+        .invoice-actions button.cancel {
+            background-color: #dc3545;
+            color: #fff;
+        }
+        .actions a {
+            display: inline-block;
+            margin-right: 10px;
+            padding: 10px 20px;
+            text-decoration: none;
+            color: #fff;
+            background-color: #007bff;
+            border-radius: 4px;
+        }
+        .actions a:hover {
+            background-color: #0056b3;
+        }
+        .discount-container {
+            margin-bottom: 15px;
+        }
+        .discount-container input {
+            width: calc(100% - 100px);
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .discount-container button {
+            width: 90px;
+            padding: 10px;
+            background-color: #ffc107;
+            color: #000;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>صفحة البيع</h1>
+    <form id="sell-form">
+        <label for="sell-product">اسم المنتج:</label>
+        <div class="suggestions">
+            <input type="text" id="sell-product" placeholder="أدخل اسم المنتج" autocomplete="off" required>
+            <div class="suggestions-list" id="suggestions-list"></div>
+        </div>
+
+        <label for="sell-quantity">الكمية:</label>
+        <input type="number" id="sell-quantity" required>
+
+        <button type="submit">إضافة إلى الفاتورة</button>
+    </form>
+
+    <div class="invoice-preview" id="invoice-preview">
+        <h2>معاينة الفاتورة</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>اسم المنتج</th>
+                    <th>الكمية</th>
+                    <th>السعر</th>
+                    <th>الإجمالي</th>
+                </tr>
+            </thead>
+            <tbody id="invoice-items">
+                <!-- سيتم ملء هذا القسم بالمنتجات المضافة -->
+            </tbody>
+        </table>
+        <p><strong>الإجمالي الكلي:</strong> <span id="total-amount">0.00</span></p>
+
+        <!-- حقل الخصم -->
+        <div class="discount-container">
+            <input type="number" id="discount" placeholder="أدخل قيمة الخصم">
+            <button onclick="applyDiscount()">تطبيق الخصم</button>
+        </div>
+
+        <label for="customer-name">اسم العميل:</label>
+        <input type="text" id="customer-name" placeholder="أدخل اسم العميل">
+
+        <div class="invoice-actions">
+            <button class="save" onclick="saveInvoice()">حفظ الفاتورة</button>
+            <button class="cancel" onclick="clearInvoice()">مسح الفاتورة</button>
+        </div>
+    </div>
+
+    <div class="actions">
+        <a href="products.html">انتقل إلى صفحة المنتجات</a>
+        <a href="daily-records.html">انتقل إلى السجلات اليومية</a>
+    </div>
+
+    <script>
+        const products = JSON.parse(localStorage.getItem('products')) || [];
+        const invoices = JSON.parse(localStorage.getItem('invoices')) || [];
+        let currentInvoice = [];
+        let totalBeforeDiscount = 0; // إجمالي الفاتورة قبل الخصم
+
+        const sellProductInput = document.getElementById('sell-product');
+        const suggestionsList = document.getElementById('suggestions-list');
+        const invoiceItems = document.getElementById('invoice-items');
+        const totalAmount = document.getElementById('total-amount');
+        const discountInput = document.getElementById('discount');
+
+        // عرض اقتراحات المنتجات
+        sellProductInput.addEventListener('input', function () {
+            const query = this.value.toLowerCase();
+            suggestionsList.innerHTML = '';
+
+            if (query) {
+                const filteredProducts = products.filter(product =>
+                    product.name.toLowerCase().includes(query)
+                );
+
+                filteredProducts.forEach(product => {
+                    const suggestion = document.createElement('div');
+                    suggestion.textContent = product.name;
+                    suggestion.addEventListener('click', () => {
+                        sellProductInput.value = product.name;
+                        suggestionsList.innerHTML = '';
+                    });
+                    suggestionsList.appendChild(suggestion);
+                });
+            }
+        });
+
+        // إضافة منتج إلى الفاتورة
+        document.getElementById('sell-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const productName = sellProductInput.value;
+            const quantity = parseInt(document.getElementById('sell-quantity').value);
+            const product = products.find(p => p.name === productName);
+
+            if (!product) {
+                alert('المنتج غير موجود!');
+                return;
+            }
+
+            if (product.quantity < quantity) {
+                alert('الكمية المطلوبة غير متاحة!');
+                return;
+            }
+
+            // إضافة المنتج إلى الفاتورة الحالية
+            const item = {
+                productName: product.name,
+                quantity: quantity,
+                price: product.salePrice,
+                total: quantity * product.salePrice
+            };
+            currentInvoice.push(item);
+
+            // تحديث عرض الفاتورة
+            displayInvoice();
+            e.target.reset();
+        });
+
+        // عرض الفاتورة
+        function displayInvoice() {
+            invoiceItems.innerHTML = '';
+            totalBeforeDiscount = 0;
+
+            currentInvoice.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.productName}</td>
+                    <td>${item.quantity}</td>
+                    <td>${item.price.toFixed(2)}</td>
+                    <td>${item.total.toFixed(2)}</td>
+                `;
+                invoiceItems.appendChild(row);
+                totalBeforeDiscount += item.total;
+            });
+
+            // عرض الإجمالي الكلي قبل الخصم
+            totalAmount.textContent = totalBeforeDiscount.toFixed(2);
+        }
+
+        // تطبيق الخصم
+        function applyDiscount() {
+            const discountValue = parseFloat(discountInput.value);
+
+            if (isNaN(discountValue)) {
+                alert('يرجى إدخال قيمة صحيحة للخصم!');
+                return;
+            }
+
+            if (discountValue < 0) {
+                alert('قيمة الخصم يجب أن تكون عددًا موجبًا!');
+                return;
+            }
+
+            if (discountValue > totalBeforeDiscount) {
+                alert('قيمة الخصم أكبر من الإجمالي الكلي!');
+                return;
+            }
+
+            // حساب الإجمالي بعد الخصم
+            const totalAfterDiscount = totalBeforeDiscount - discountValue;
+            totalAmount.textContent = totalAfterDiscount.toFixed(2);
+        }
+
+        // حفظ الفاتورة
+        function saveInvoice() {
+            const customerName = document.getElementById('customer-name').value;
+
+            if (!customerName) {
+                alert('يرجى إدخال اسم العميل!');
+                return;
+            }
+
+            if (currentInvoice.length === 0) {
+                alert('لا توجد عناصر في الفاتورة!');
+                return;
+            }
+
+            // خصم الكمية من المنتجات
+            currentInvoice.forEach(item => {
+                const product = products.find(p => p.name === item.productName);
+                product.quantity -= item.quantity;
+            });
+
+            // إضافة الفاتورة إلى السجلات
+            const invoice = {
+                customerName: customerName,
+                items: currentInvoice,
+                total: parseFloat(totalAmount.textContent), // الإجمالي بعد الخصم
+                date: new Date().toISOString().split('T')[0] // التاريخ فقط (YYYY-MM-DD)
+            };
+            invoices.push(invoice);
+
+            // حفظ التحديثات في LocalStorage
+            localStorage.setItem('products', JSON.stringify(products));
+            localStorage.setItem('invoices', JSON.stringify(invoices));
+
+            alert('تم حفظ الفاتورة بنجاح!');
+            clearInvoice();
+        }
+
+        // مسح الفاتورة الحالية
+        function clearInvoice() {
+            currentInvoice = [];
+            displayInvoice();
+            document.getElementById('customer-name').value = '';
+            discountInput.value = ''; // إعادة تعيين حقل الخصم
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حساب الأرباح</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            padding: 20px;
+            text-align: right;
+        }
+        h1 {
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #333;
+            color: #fff;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+    </style>
+</head>
+<body>
+    <h1>حساب الأرباح</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>اسم المنتج</th>
+                <th>الكمية</th>
+                <th>الربح لكل منتج</th>
+                <th>إجمالي الربح</th>
+            </tr>
+        </thead>
+        <tbody id="profitsTable"></tbody>
+    </table>
+    <h2 id="totalProfit">إجمالي الأرباح: 0 جنيه</h2>
+
+    <script>
+        // جلب المنتجات من localStorage
+        const products = JSON.parse(localStorage.getItem('products')) || [];
+        const profitsTable = document.getElementById('profitsTable');
+        const totalProfitDisplay = document.getElementById('totalProfit');
+
+        let totalProfit = 0;
+
+        // حساب الأرباح لكل منتج
+        products.forEach(product => {
+            const profitPerUnit = product.salePrice - product.purchasePrice;
+            const totalProductProfit = profitPerUnit * product.quantity;
+
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${product.name}</td>
+                <td>${product.quantity}</td>
+                <td>${profitPerUnit.toFixed(2)} جنيه</td>
+                <td>${totalProductProfit.toFixed(2)} جنيه</td>
+            `;
+            profitsTable.appendChild(row);
+
+            totalProfit += totalProductProfit;
+        });
+
+        // عرض إجمالي الأرباح
+        totalProfitDisplay.textContent = `إجمالي الأرباح: ${totalProfit.toFixed(2)} جنيه`;
+    </script>
+</body>
+</html>
