@@ -20,7 +20,7 @@
             font-weight: bold;
         }
         form input, form button {
-            width: 100%;
+            width: 90%;
             padding: 10px;
             margin-bottom: 15px;
             border: 1px solid #ccc;
@@ -83,6 +83,7 @@
         }
         .invoice-actions button {
             margin-right: 10px;
+            margin-top: 10px;
             padding: 10px 20px;
             border: none;
             border-radius: 4px;
@@ -99,6 +100,7 @@
         .actions a {
             display: inline-block;
             margin-right: 10px;
+            margin-top: 15px;
             padding: 10px 20px;
             text-decoration: none;
             color: #fff;
@@ -110,6 +112,8 @@
         }
         .discount-container {
             margin-bottom: 15px;
+            margin-top: 15px;
+
         }
         .discount-container input {
             width: calc(100% - 100px);
@@ -120,12 +124,19 @@
         .discount-container button {
             width: 90px;
             padding: 10px;
+            margin-top: 10px;
             background-color: #ffc107;
             color: #000;
             border: none;
-            border-radius: 4px;
+            border-radius: 8px;
             cursor: pointer;
         }
+        .discount-container button:hover {
+            background-color: #c49300;
+            
+            
+        }
+       
     </style>
 </head>
 <body>
@@ -335,6 +346,8 @@
             document.getElementById('customer-name').value = '';
             discountInput.value = ''; // إعادة تعيين حقل الخصم
         }
+
+        
     </script>
 </body>
 </html>
