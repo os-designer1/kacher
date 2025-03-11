@@ -43,7 +43,7 @@
             background-color: #218838;
         }
         table {
-            width: 80%;
+            width: 95%;
             margin: 20px auto;
             border-collapse: collapse;
             background-color: #fff;
@@ -112,14 +112,14 @@
 
 <h1>إدارة العملاء</h1>
 
-<button class="filter-btn" onclick="showSuppliersWithDebt()">عرض العملاء الذين عليهم أموال</button>
+<button class="filter-btn" onclick="showCustomersWithDebt()">عرض العملاء الذين عليهم أموال</button>
 
 <div class="search-container">
-    <input type="text" id="searchInput" placeholder="ابحث باسم المورد..." oninput="filterSuppliers()">
+    <input type="text" id="searchInput" placeholder="ابحث باسم العميل..." oninput="filterCustomers()">
 </div>
 
-<h2>قائمة الموردين</h2>
-<table id="suppliersTable">
+<h2>قائمة العملاء</h2>
+<table id="customersTable">
     <thead>
         <tr>
             <th>اسم العميل</th>
@@ -136,14 +136,14 @@
 <div class="fixed-bottom">
     <button onclick="toggleForm()">إضافة عميل جديد</button>
     <div class="form-container" id="formContainer">
-        <label for="supplierName">اسم عميل:</label>
-        <input type="text" id="supplierName" placeholder="ادخل اسم العميل">
+        <label for="customerName">اسم العميل:</label>
+        <input type="text" id="customerName" placeholder="ادخل اسم العميل">
 
-        <label for="supplierAddress">عنوان عميل:</label>
-        <input type="text" id="supplierAddress" placeholder="ادخل عنوان العميل">
+        <label for="customerAddress">عنوان العميل:</label>
+        <input type="text" id="customerAddress" placeholder="ادخل عنوان العميل">
 
-        <label for="supplierPhone">رقم الهاتف:</label>
-        <input type="text" id="supplierPhone" placeholder="ادخل رقم الهاتف">
+        <label for="customerPhone">رقم الهاتف:</label>
+        <input type="text" id="customerPhone" placeholder="ادخل رقم الهاتف">
 
         <label for="totalAmount">المبلغ الإجمالي:</label>
         <input type="number" id="totalAmount" placeholder="ادخل المبلغ الإجمالي">
@@ -151,26 +151,26 @@
         <label for="paidAmount">المبلغ المدفوع:</label>
         <input type="number" id="paidAmount" placeholder="ادخل المبلغ المدفوع">
 
-        <button onclick="saveSupplier()">حفظ</button>
+        <button onclick="saveCustomer()">حفظ</button>
         <button onclick="clearForm()">مسح</button>
     </div>
 </div>
 
 <script>
-    let suppliers = [];
+    let customers = [];
 
     // تحميل البيانات من LocalStorage عند فتح الصفحة
-    function loadSuppliers() {
-        const savedSuppliers = localStorage.getItem('suppliers');
-        if (savedSuppliers) {
-            suppliers = JSON.parse(savedSuppliers);
-            renderSuppliersTable();
+    function loadCustomers() {
+        const savedCustomers = localStorage.getItem('customers');
+        if (savedCustomers) {
+            customers = JSON.parse(savedCustomers);
+            renderCustomersTable();
         }
     }
 
     // حفظ البيانات في LocalStorage
-    function saveSuppliers() {
-        localStorage.setItem('suppliers', JSON.stringify(suppliers));
+    function saveCustomers() {
+        localStorage.setItem('customers', JSON.stringify(customers));
     }
 
     function toggleForm() {
@@ -178,25 +178,25 @@
         formContainer.style.display = formContainer.style.display === 'block' ? 'none' : 'block';
     }
 
-    function saveSupplier() {
-        const supplierName = document.getElementById('supplierName').value;
-        const supplierAddress = document.getElementById('supplierAddress').value;
-        const supplierPhone = document.getElementById('supplierPhone').value;
+    function saveCustomer() {
+        const customerName = document.getElementById('customerName').value;
+        const customerAddress = document.getElementById('customerAddress').value;
+        const customerPhone = document.getElementById('customerPhone').value;
         const totalAmount = parseFloat(document.getElementById('totalAmount').value);
         const paidAmount = parseFloat(document.getElementById('paidAmount').value);
 
-        if (supplierName && supplierAddress && supplierPhone && !isNaN(totalAmount) && !isNaN(paidAmount)) {
-            suppliers.push({
-                name: supplierName,
-                address: supplierAddress,
-                phone: supplierPhone,
+        if (customerName && customerAddress && customerPhone && !isNaN(totalAmount) && !isNaN(paidAmount)) {
+            customers.push({
+                name: customerName,
+                address: customerAddress,
+                phone: customerPhone,
                 totalAmount: totalAmount,
                 paidAmount: paidAmount,
                 payments: []
             });
             clearForm();
-            renderSuppliersTable();
-            saveSuppliers(); // حفظ البيانات في LocalStorage
+            renderCustomersTable();
+            saveCustomers(); // حفظ البيانات في LocalStorage
             toggleForm(); // إخفاء النموذج بعد الحفظ
         } else {
             alert("يرجى ملء جميع الحقول بشكل صحيح!");
@@ -204,59 +204,59 @@
     }
 
     function clearForm() {
-        document.getElementById('supplierName').value = '';
-        document.getElementById('supplierAddress').value = '';
-        document.getElementById('supplierPhone').value = '';
+        document.getElementById('customerName').value = '';
+        document.getElementById('customerAddress').value = '';
+        document.getElementById('customerPhone').value = '';
         document.getElementById('totalAmount').value = '';
         document.getElementById('paidAmount').value = '';
     }
 
-    function viewSupplierDetails(index) {
+    function viewCustomerDetails(index) {
         // حفظ الفهرس في LocalStorage للوصول إليه في الصفحة الأخرى
-        localStorage.setItem('selectedSupplierIndex', index);
-        // الانتقال إلى صفحة تفاصيل المورد
-        window.location.href = 'supplier_details.html';
+        localStorage.setItem('selectedCustomerIndex', index);
+        // الانتقال إلى صفحة تفاصيل العميل
+        window.location.href = `customerAccount.html?index=${index}`;
     }
 
-    // حذف المورد
-    function deleteSupplier(index) {
-        if (confirm("هل أنت متأكد من حذف هذا المورد؟")) {
-            suppliers.splice(index, 1);
-            saveSuppliers(); // حفظ التغييرات في LocalStorage
-            renderSuppliersTable(); // إعادة عرض الجدول
+    // حذف العميل
+    function deleteCustomer(index) {
+        if (confirm("هل أنت متأكد من حذف هذا العميل؟")) {
+            customers.splice(index, 1);
+            saveCustomers(); // حفظ التغييرات في LocalStorage
+            renderCustomersTable(); // إعادة عرض الجدول
         }
     }
 
-    // تصفية الموردين حسب الاسم
-    function filterSuppliers() {
+    // تصفية العملاء حسب الاسم
+    function filterCustomers() {
         const searchText = document.getElementById('searchInput').value.toLowerCase();
-        const filteredSuppliers = suppliers.filter(supplier => 
-            supplier.name.toLowerCase().includes(searchText)
+        const filteredCustomers = customers.filter(customer => 
+            customer.name.toLowerCase().includes(searchText)
         );
-        renderSuppliersTable(filteredSuppliers);
+        renderCustomersTable(filteredCustomers);
     }
 
     // عرض العملاء الذين عليهم أموال
-    function showSuppliersWithDebt() {
-        const suppliersWithDebt = suppliers.filter(supplier => 
-            (supplier.totalAmount - supplier.paidAmount) > 0
+    function showCustomersWithDebt() {
+        const customersWithDebt = customers.filter(customer => 
+            (customer.totalAmount - customer.paidAmount) > 0
         );
-        renderSuppliersTable(suppliersWithDebt);
+        renderCustomersTable(customersWithDebt);
     }
 
     // عرض الجدول
-    function renderSuppliersTable(filteredSuppliers = suppliers) {
-        const tbody = document.querySelector('#suppliersTable tbody');
+    function renderCustomersTable(filteredCustomers = customers) {
+        const tbody = document.querySelector('#customersTable tbody');
         tbody.innerHTML = '';
-        filteredSuppliers.forEach((supplier, index) => {
-            const remainingAmount = supplier.totalAmount - supplier.paidAmount;
+        filteredCustomers.forEach((customer, index) => {
+            const remainingAmount = customer.totalAmount - customer.paidAmount;
             const row = document.createElement('tr');
             row.innerHTML = `
-                <td>${supplier.name}</td>
+                <td>${customer.name}</td>
                 <td>${remainingAmount.toFixed(2)}</td>
-                <td><button onclick="viewSupplierDetails(${index})">عرض التفاصيل</button></td>
+                <td><button onclick="viewCustomerDetails(${index})">عرض التفاصيل</button></td>
                 <td>
-                    ${remainingAmount === 0 ? `<button class="delete-btn" onclick="deleteSupplier(${index})">حذف المورد</button>` : ''}
+                    ${remainingAmount === 0 ? `<button class="delete-btn" onclick="deleteCustomer(${index})">حذف العميل</button>` : ''}
                 </td>
             `;
             tbody.appendChild(row);
@@ -264,7 +264,7 @@
     }
 
     // تحميل البيانات عند فتح الصفحة
-    loadSuppliers();
+    loadCustomers();
 </script>
 
 </body>

@@ -107,7 +107,7 @@
         </tr>
     </table>
 
-    <button onclick="updateSupplier()">حفظ التعديلات</button>
+    <button onclick="updateCustomer()">حفظ التعديلات</button>
     <button onclick="addPayment()">دفعة جديدة</button>
     <button onclick="window.location.href = 'index.html'">العودة للقائمة</button>
 
@@ -126,33 +126,33 @@
 </div>
 
 <script>
-    let suppliers = [];
-    let selectedSupplierIndex = null;
+    let customers = [];
+    let selectedCustomerIndex = null;
 
     // تحميل البيانات من LocalStorage
-    function loadSuppliers() {
-        const savedSuppliers = localStorage.getItem('suppliers');
-        if (savedSuppliers) {
-            suppliers = JSON.parse(savedSuppliers);
+    function loadCustomers() {
+        const savedCustomers = localStorage.getItem('customers');
+        if (savedCustomers) {
+            customers = JSON.parse(savedCustomers);
         }
-        selectedSupplierIndex = localStorage.getItem('selectedSupplierIndex');
-        renderSupplierDetails();
+        selectedCustomerIndex = localStorage.getItem('selectedCustomerIndex');
+        renderCustomerDetails();
     }
 
     // عرض تفاصيل المورد
-    function renderSupplierDetails() {
-        if (selectedSupplierIndex !== null) {
-            const supplier = suppliers[selectedSupplierIndex];
-            const remainingAmount = supplier.totalAmount - supplier.paidAmount;
+    function renderCustomerDetails() {
+        if (selectedCustomerIndex !== null) {
+            const customer = customers[selectedCustomerIndex];
+            const remainingAmount = customer.totalAmount - customer.paidAmount;
 
-            document.getElementById('supplierName').value = supplier.name;
-            document.getElementById('supplierAddress').value = supplier.address;
-            document.getElementById('supplierPhone').value = supplier.phone;
-            document.getElementById('totalAmount').value = supplier.totalAmount.toFixed(2);
-            document.getElementById('paidAmount').value = supplier.paidAmount.toFixed(2);
+            document.getElementById('supplierName').value = customer.name;
+            document.getElementById('supplierAddress').value = customer.address;
+            document.getElementById('supplierPhone').value = customer.phone;
+            document.getElementById('totalAmount').value = customer.totalAmount.toFixed(2);
+            document.getElementById('paidAmount').value = customer.paidAmount.toFixed(2);
             document.getElementById('remainingAmount').value = remainingAmount.toFixed(2);
 
-            renderPaymentsTable(supplier.payments);
+            renderPaymentsTable(customer.payments);
         }
     }
 
@@ -171,15 +171,15 @@
     }
 
     // تحديث بيانات المورد
-    function updateSupplier() {
-        if (selectedSupplierIndex !== null) {
-            const supplier = suppliers[selectedSupplierIndex];
-            supplier.name = document.getElementById('supplierName').value;
-            supplier.address = document.getElementById('supplierAddress').value;
-            supplier.phone = document.getElementById('supplierPhone').value;
-            supplier.totalAmount = parseFloat(document.getElementById('totalAmount').value);
+    function updateCustomer() {
+        if (selectedCustomerIndex !== null) {
+            const customer = customers[selectedCustomerIndex];
+            customer.name = document.getElementById('supplierName').value;
+            customer.address = document.getElementById('supplierAddress').value;
+            customer.phone = document.getElementById('supplierPhone').value;
+            customer.totalAmount = parseFloat(document.getElementById('totalAmount').value);
 
-            localStorage.setItem('suppliers', JSON.stringify(suppliers));
+            localStorage.setItem('customers', JSON.stringify(customers));
             alert("تم تحديث بيانات المورد بنجاح!");
         }
     }
@@ -192,17 +192,19 @@
                 date: new Date().toLocaleDateString(),
                 amount: amount
             };
-            suppliers[selectedSupplierIndex].payments.push(payment);
-            suppliers[selectedSupplierIndex].paidAmount += amount;
-            localStorage.setItem('suppliers', JSON.stringify(suppliers));
-            renderSupplierDetails();
+            customers[selectedCustomerIndex].payments.push(payment);
+            customers[selectedCustomerIndex].paidAmount += amount;
+            localStorage.setItem('customers', JSON.stringify(customers));
+            renderCustomerDetails();
         } else {
             alert("يرجى إدخال مبلغ صحيح!");
         }
     }
 
     // تحميل البيانات عند فتح الصفحة
-    loadSuppliers();
+    loadCustomers();
+
+    
 </script>
 
 </body>
