@@ -9,7 +9,8 @@
             font-family: Arial, sans-serif;
             background-color: #f4f4f4;
             text-align: right;
-            margin: 9px;
+            margin: 0;
+            padding: 20px;
         }
         h1 {
             color: #333;
@@ -45,22 +46,6 @@
         .actions a:hover {
             background-color: #0056b3;
         }
-        .date-buttons {
-            margin-bottom: 20px;
-        }
-        .date-buttons button {
-            margin-right: 10px;
-            margin-bottom: 10px;
-            padding: 10px 20px;
-            background-color: #28a745;
-            color: #fff;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .date-buttons button:hover {
-            background-color: #218838;
-        }
         .search-container {
             margin-bottom: 20px;
         }
@@ -87,7 +72,6 @@
     <h1>السجلات اليومية</h1>
 
     <div class="search-container">
-       
         <input type="text" id="search-name" placeholder="أدخل اسم العميل">
         <button onclick="searchByName()">بحث بالاسم</button>
     </div>
@@ -96,7 +80,6 @@
         <a href="suppliers.html">الموردين</a>
         <a href="sales.html">البيع</a>
     </div>
-    <div class="date-buttons" id="date-buttons"></div>
 
     <table>
         <thead>
@@ -110,16 +93,16 @@
         <tbody id="invoice-table-body"></tbody>
     </table>
 
-   
-
     <script>
+        // الفواتير المحفوظة في LocalStorage
         const invoices = JSON.parse(localStorage.getItem('invoices')) || [];
-        const dateButtonsContainer = document.getElementById('date-buttons');
+
+        // مرجع إلى عنصر الجدول
         const invoiceTableBody = document.getElementById('invoice-table-body');
 
+        // تجميع الفواتير حسب اسم العميل
         function groupInvoicesByName() {
             const grouped = {};
-
             invoices.forEach(invoice => {
                 if (!grouped[invoice.customerName]) {
                     grouped[invoice.customerName] = { total: 0, invoices: [] };
@@ -127,10 +110,10 @@
                 grouped[invoice.customerName].total += invoice.total;
                 grouped[invoice.customerName].invoices.push(invoice);
             });
-
             return grouped;
         }
 
+        // عرض الفواتير المجموعة في الجدول
         function displayGroupedInvoices() {
             const groupedInvoices = groupInvoicesByName();
             invoiceTableBody.innerHTML = '';
@@ -148,6 +131,7 @@
             });
         }
 
+        // عرض تفاصيل الفواتير لعميل معين
         function showGroupedInvoiceDetails(customerName) {
             const groupedInvoices = groupInvoicesByName();
             const customerData = groupedInvoices[customerName];
@@ -165,45 +149,43 @@
             }
         }
 
-        displayGroupedInvoices();
-    </script>
-    <script>
-        function getQueryParam(param) {
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get(param);
-        }
-    
+        // البحث عن الفواتير حسب اسم العميل
         function searchByName() {
             const searchName = document.getElementById('search-name').value.trim();
             invoiceTableBody.innerHTML = '';
-    
-            const filteredInvoices = invoices.filter(invoice => 
-                invoice.customerName.toLowerCase().includes(searchName.toLowerCase())
-            );
-    
-            filteredInvoices.forEach(invoice => {
+
+            const grouped = invoices.reduce((acc, invoice) => {
+                if (invoice.customerName.toLowerCase().includes(searchName.toLowerCase())) {
+                    if (!acc[invoice.customerName]) {
+                        acc[invoice.customerName] = { total: 0, invoices: [] };
+                    }
+                    acc[invoice.customerName].total += invoice.total;
+                    acc[invoice.customerName].invoices.push(invoice);
+                }
+                return acc;
+            }, {});
+
+            Object.keys(grouped).forEach(customerName => {
+                const { total, invoices } = grouped[customerName];
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${invoice.customerName}</td>
-                    <td>${invoice.date}</td>
-                    <td>${invoice.total.toFixed(2)}</td>
-                    <td><button onclick="showInvoiceDetails('${invoice.customerName}', '${invoice.date}')">عرض التفاصيل</button></td>
+                    <td>${customerName}</td>
+                    <td>${invoices.length}</td>
+                    <td>${total.toFixed(2)}</td>
+                    <td><button onclick="showGroupedInvoiceDetails('${customerName}')">عرض التفاصيل</button></td>
                 `;
                 invoiceTableBody.appendChild(row);
             });
-        }
-    
-        function initializeSearch() {
-            const nameParam = getQueryParam('name');
-            if (nameParam) {
-                document.getElementById('search-name').value = nameParam;
-                searchByName();
+
+            if (Object.keys(grouped).length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td colspan="4">لا توجد نتائج مطابقة.</td>`;
+                invoiceTableBody.appendChild(row);
             }
         }
-    
-        // استدعاء الوظيفة عند تحميل الصفحة
-        initializeSearch();
+
+        // عرض الفواتير عند فتح الصفحة
+        displayGroupedInvoices();
     </script>
-    
 </body>
 </html>
