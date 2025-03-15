@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تفاصيل المورد</title>
+    <title>تفاصيل العميل</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -74,15 +74,16 @@
             background-color: #007bff;
             color: white;
         }
+      
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>تفاصيل المورد</h1>
+    <h1>تفاصيل العميل</h1>
     <table>
         <tr>
-            <th>اسم المورد</th>
+            <th>اسم العميل</th>
             <td><input type="text" id="supplierName" value=""></td>
         </tr>
         <tr>
@@ -107,9 +108,10 @@
         </tr>
     </table>
 
-    <button onclick="updateCustomer()">حفظ التعديلات</button>
-    <button onclick="addPayment()">دفعة جديدة</button>
+    <button onclick="addPayment()">دفع الدين </button>
+    <button onclick="add()">زياده الدين</button>
     <button onclick="window.location.href = 'index.html'">العودة للقائمة</button>
+    <button onclick="window.location.href = 'daily-records.html'">السجلات</button>
 
     <h2>سجل الدفعات</h2>
     <table class="payments-table">
@@ -117,12 +119,14 @@
             <tr>
                 <th>التاريخ</th>
                 <th>المبلغ</th>
+                <th>نوع العملية</th> <!-- عمود جديد -->
             </tr>
         </thead>
         <tbody id="paymentsTableBody">
             <!-- الدفعات ستضاف هنا -->
         </tbody>
     </table>
+    
 </div>
 
 <script>
@@ -139,7 +143,7 @@
         renderCustomerDetails();
     }
 
-    // عرض تفاصيل المورد
+    // عرض تفاصيل العميل
     function renderCustomerDetails() {
         if (selectedCustomerIndex !== null) {
             const customer = customers[selectedCustomerIndex];
@@ -156,21 +160,9 @@
         }
     }
 
-    // عرض سجل الدفعات
-    function renderPaymentsTable(payments) {
-        const tbody = document.getElementById('paymentsTableBody');
-        tbody.innerHTML = '';
-        payments.forEach(payment => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${payment.date}</td>
-                <td>${payment.amount.toFixed(2)}</td>
-            `;
-            tbody.appendChild(row);
-        });
-    }
+   
 
-    // تحديث بيانات المورد
+    // تحديث بيانات العميل
     function updateCustomer() {
         if (selectedCustomerIndex !== null) {
             const customer = customers[selectedCustomerIndex];
@@ -180,32 +172,71 @@
             customer.totalAmount = parseFloat(document.getElementById('totalAmount').value);
 
             localStorage.setItem('customers', JSON.stringify(customers));
-            alert("تم تحديث بيانات المورد بنجاح!");
+            alert("تم تحديث بيانات العميل بنجاح!");
         }
     }
 
     // إضافة دفعة جديدة
-    function addPayment() {
-        const amount = parseFloat(prompt("ادخل مبلغ الدفعة:"));
-        if (!isNaN(amount)) {
-            const payment = {
-                date: new Date().toLocaleDateString(),
-                amount: amount
-            };
-            customers[selectedCustomerIndex].payments.push(payment);
-            customers[selectedCustomerIndex].paidAmount += amount;
-            localStorage.setItem('customers', JSON.stringify(customers));
-            renderCustomerDetails();
-        } else {
-            alert("يرجى إدخال مبلغ صحيح!");
-        }
+function addPayment() {
+    const amount = parseFloat(prompt("ادخل مبلغ الدفعة:"));
+    if (!isNaN(amount) && amount > 0) {
+        const payment = {
+            date: new Date().toLocaleDateString(),
+            amount: amount,
+            type: "دفع دين" // نوع العملية
+        };
+        customers[selectedCustomerIndex].payments.push(payment);
+        customers[selectedCustomerIndex].paidAmount += amount;
+        localStorage.setItem('customers', JSON.stringify(customers));
+        renderCustomerDetails();
+        alert("تم تسجيل دفع الدين بنجاح!");
+    } else {
+        alert("يرجى إدخال مبلغ صحيح!");
     }
+}
+
+// زيادة الدين
+function add() {
+    const additionalDebt = parseFloat(prompt("أدخل قيمة الدين الجديدة:"));
+    if (!isNaN(additionalDebt) && additionalDebt > 0) {
+        customers[selectedCustomerIndex].totalAmount += additionalDebt;
+        const payment = {
+            date: new Date().toLocaleDateString(),
+            amount: additionalDebt,
+            type: "زيادة دين" // نوع العملية
+        };
+        customers[selectedCustomerIndex].payments.push(payment);
+        localStorage.setItem('customers', JSON.stringify(customers));
+        renderCustomerDetails();
+        alert("تمت زيادة الدين بنجاح!");
+    } else {
+        alert("يرجى إدخال قيمة دين صحيحة!");
+    }
+}
+
+// عرض سجل الدفعات
+function renderPaymentsTable(payments) {
+    const tbody = document.getElementById('paymentsTableBody');
+    tbody.innerHTML = '';
+    payments.forEach(payment => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${payment.date}</td>
+            <td>${payment.amount.toFixed(2)}</td>
+            <td>${payment.type}</td> <!-- نوع العملية -->
+        `;
+        tbody.appendChild(row);
+    });
+}
+
 
     // تحميل البيانات عند فتح الصفحة
     loadCustomers();
 
     
 </script>
+
+
 
 </body>
 </html>

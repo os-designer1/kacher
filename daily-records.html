@@ -8,9 +8,8 @@
         body {
             font-family: Arial, sans-serif;
             background-color: #f4f4f4;
-            
             text-align: right;
-            margin: 9px;;
+            margin: 9px;
         }
         h1 {
             color: #333;
@@ -70,6 +69,7 @@
             border: 1px solid #ccc;
             border-radius: 4px;
             width: 200px;
+            margin-right: 10px;
         }
         .search-container button {
             padding: 10px 20px;
@@ -79,86 +79,108 @@
             border: none;
             border-radius: 4px;
             cursor: pointer;
+            margin-right: 10px;
         }
     </style>
 </head>
 <body>
     <h1>السجلات اليومية</h1>
 
-    <!-- حقل البحث النصي بالتاريخ -->
     <div class="search-container">
-        <input type="text" id="search-date" placeholder="أدخل التاريخ (YYYY-MM-DD)">
-        <button onclick="searchByDate()">بحث بالتاريخ</button>
+       
+        <input type="text" id="search-name" placeholder="أدخل اسم العميل">
+        <button onclick="searchByName()">بحث بالاسم</button>
     </div>
-
-    <!-- أزرار التواريخ -->
-    <div class="date-buttons" id="date-buttons">
-        <!-- سيتم ملء هذا القسم بأزرار التواريخ باستخدام JavaScript -->
+    <div class="actions">
+        <a href="customers.html">العملاء</a>
+        <a href="suppliers.html">الموردين</a>
+        <a href="sales.html">البيع</a>
     </div>
+    <div class="date-buttons" id="date-buttons"></div>
 
-    <!-- جدول الفواتير -->
     <table>
         <thead>
             <tr>
                 <th>اسم العميل</th>
-                <th>التاريخ</th>
+                <th>عدد الفواتير</th>
                 <th>الإجمالي</th>
-                <th>تفاصيل الفاتورة</th>
+                <th>تفاصيل الفواتير</th>
             </tr>
         </thead>
-        <tbody id="invoice-table-body">
-            <!-- سيتم ملء هذا القسم بالفواتير باستخدام JavaScript -->
-        </tbody>
+        <tbody id="invoice-table-body"></tbody>
     </table>
 
-    <div class="actions">
-        <a href="products.html">انتقل إلى صفحة المنتجات</a>
-        <a href="sales.html">انتقل إلى صفحة البيع</a>
-    </div>
+   
 
     <script>
         const invoices = JSON.parse(localStorage.getItem('invoices')) || [];
         const dateButtonsContainer = document.getElementById('date-buttons');
         const invoiceTableBody = document.getElementById('invoice-table-body');
 
-        // إنشاء أزرار التواريخ
-        function createDateButtons() {
-            const uniqueDates = [...new Set(invoices.map(invoice => invoice.date))];
-            dateButtonsContainer.innerHTML = '';
+        function groupInvoicesByName() {
+            const grouped = {};
 
-            uniqueDates.forEach(date => {
-                const button = document.createElement('button');
-                button.textContent = date;
-                button.addEventListener('click', () => filterByDate(date));
-                dateButtonsContainer.appendChild(button);
+            invoices.forEach(invoice => {
+                if (!grouped[invoice.customerName]) {
+                    grouped[invoice.customerName] = { total: 0, invoices: [] };
+                }
+                grouped[invoice.customerName].total += invoice.total;
+                grouped[invoice.customerName].invoices.push(invoice);
+            });
+
+            return grouped;
+        }
+
+        function displayGroupedInvoices() {
+            const groupedInvoices = groupInvoicesByName();
+            invoiceTableBody.innerHTML = '';
+
+            Object.keys(groupedInvoices).forEach(customerName => {
+                const { total, invoices } = groupedInvoices[customerName];
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${customerName}</td>
+                    <td>${invoices.length}</td>
+                    <td>${total.toFixed(2)}</td>
+                    <td><button onclick="showGroupedInvoiceDetails('${customerName}')">عرض التفاصيل</button></td>
+                `;
+                invoiceTableBody.appendChild(row);
             });
         }
 
-        // تصفية الفواتير حسب التاريخ
-        function filterByDate(date) {
-            const filteredInvoices = invoices.filter(invoice => invoice.date === date);
-            displayInvoices(filteredInvoices);
-        }
-
-        // البحث عن الفواتير بالتاريخ (بحث نصي)
-        function searchByDate() {
-            const searchDate = document.getElementById('search-date').value.trim();
-            if (!searchDate) {
-                alert('يرجى إدخال تاريخ للبحث!');
-                return;
-            }
-
-            const filteredInvoices = invoices.filter(invoice => invoice.date.includes(searchDate));
-            if (filteredInvoices.length === 0) {
-                alert('لا توجد فواتير تطابق هذا التاريخ!');
-            } else {
-                displayInvoices(filteredInvoices);
+        function showGroupedInvoiceDetails(customerName) {
+            const groupedInvoices = groupInvoicesByName();
+            const customerData = groupedInvoices[customerName];
+            if (customerData) {
+                let details = `اسم العميل: ${customerName}\n\n`;
+                customerData.invoices.forEach(invoice => {
+                    details += `التاريخ: ${invoice.date}\n`;
+                    invoice.items.forEach(item => {
+                        details += `${item.productName} - ${item.quantity} x ${item.price.toFixed(2)} = ${item.total.toFixed(2)}\n`;
+                    });
+                    details += `\n`;
+                });
+                details += `الإجمالي الكلي: ${customerData.total.toFixed(2)}`;
+                alert(details);
             }
         }
 
-        // عرض الفواتير
-        function displayInvoices(filteredInvoices = invoices) {
+        displayGroupedInvoices();
+    </script>
+    <script>
+        function getQueryParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+    
+        function searchByName() {
+            const searchName = document.getElementById('search-name').value.trim();
             invoiceTableBody.innerHTML = '';
+    
+            const filteredInvoices = invoices.filter(invoice => 
+                invoice.customerName.toLowerCase().includes(searchName.toLowerCase())
+            );
+    
             filteredInvoices.forEach(invoice => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
@@ -170,24 +192,18 @@
                 invoiceTableBody.appendChild(row);
             });
         }
-
-        // عرض تفاصيل الفاتورة
-        function showInvoiceDetails(customerName, date) {
-            const invoice = invoices.find(inv => inv.customerName === customerName && inv.date === date);
-            if (invoice) {
-                let details = `اسم العميل: ${invoice.customerName}\nالتاريخ: ${invoice.date}\n\n`;
-                invoice.items.forEach(item => {
-                    details += `${item.productName} - ${item.quantity} x ${item.price.toFixed(2)} = ${item.total.toFixed(2)}\n`;
-                });
-                details += `\nالإجمالي الكلي: ${invoice.total.toFixed(2)}`;
-                alert(details);
+    
+        function initializeSearch() {
+            const nameParam = getQueryParam('name');
+            if (nameParam) {
+                document.getElementById('search-name').value = nameParam;
+                searchByName();
             }
         }
-
-        // تهيئة الصفحة
-        createDateButtons();
-        displayInvoices();
-        
+    
+        // استدعاء الوظيفة عند تحميل الصفحة
+        initializeSearch();
     </script>
+    
 </body>
 </html>

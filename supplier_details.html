@@ -107,9 +107,18 @@
         </tr>
     </table>
 
-    <button onclick="updateSupplier()">حفظ التعديلات</button>
-    <button onclick="addPayment()">دفعة جديدة</button>
+    <button onclick="addPayment()">دفع الدين </button>
+    <button onclick="add()">زياده الدين</button>
     <button onclick="window.location.href = 'index.html'">العودة للقائمة</button>
+    <button onclick="window.location.href = 'daily-records.html'">السجلات</button>
+
+    <script>
+        function goToRecords() {
+            const supplierName = document.getElementById('supplierName').value;
+            window.location.href = `records.html?name=${encodeURIComponent(supplierName)}`;
+        }
+    </script>
+    
 
     <h2>سجل الدفعات</h2>
     <table class="payments-table">
@@ -117,6 +126,7 @@
             <tr>
                 <th>التاريخ</th>
                 <th>المبلغ</th>
+                <th>نوع العملية</th>
             </tr>
         </thead>
         <tbody id="paymentsTableBody">
@@ -165,6 +175,7 @@
             row.innerHTML = `
                 <td>${payment.date}</td>
                 <td>${payment.amount.toFixed(2)}</td>
+                <td>${payment.type}</td>
             `;
             tbody.appendChild(row);
         });
@@ -184,16 +195,35 @@
         }
     }
 
-    // إضافة دفعة جديدة
+    // إضافة دفعة جديدة (دفع الدين)
     function addPayment() {
         const amount = parseFloat(prompt("ادخل مبلغ الدفعة:"));
         if (!isNaN(amount)) {
             const payment = {
                 date: new Date().toLocaleDateString(),
-                amount: amount
+                amount: amount,
+                type: "دفع دين" // نوع العملية
             };
             suppliers[selectedSupplierIndex].payments.push(payment);
             suppliers[selectedSupplierIndex].paidAmount += amount;
+            localStorage.setItem('suppliers', JSON.stringify(suppliers));
+            renderSupplierDetails();
+        } else {
+            alert("يرجى إدخال مبلغ صحيح!");
+        }
+    }
+
+    // إضافة دفعة جديدة (زيادة الدين)
+    function add() {
+        const amount = parseFloat(prompt("ادخل مبلغ الزيادة:"));
+        if (!isNaN(amount)) {
+            const payment = {
+                date: new Date().toLocaleDateString(),
+                amount: amount,
+                type: "زيادة دين" // نوع العملية
+            };
+            suppliers[selectedSupplierIndex].payments.push(payment);
+            suppliers[selectedSupplierIndex].totalAmount += amount;
             localStorage.setItem('suppliers', JSON.stringify(suppliers));
             renderSupplierDetails();
         } else {
